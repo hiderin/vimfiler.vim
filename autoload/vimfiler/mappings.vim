@@ -864,6 +864,11 @@ function! s:yank_full_path() "{{{
     endif
   endif
 
+  "Windowsアプリケーションで読めるようパスデリミタを変更
+  if vimfiler#util#is_windows()
+	  let filename = substitute(filename, '\/', '\\', 'g')
+  endif
+
   let @" = filename
   if has('clipboard') || has('xterm_clipboard')
     let @+ = filename
