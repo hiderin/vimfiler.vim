@@ -1,9 +1,10 @@
 vimfiler
-450727f
+1a33dec
 
 Prelude
 Data.List
 Process
-System.Cache
 Vim.Buffer
 Vim.Message
+Data.String
+System.Cache.Deprecated

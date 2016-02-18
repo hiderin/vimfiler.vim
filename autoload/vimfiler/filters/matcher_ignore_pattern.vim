@@ -1,6 +1,6 @@
 "=============================================================================
-" FILE: custom.vim
-" AUTHOR: Shougo Matsushita <Shougo.Matsu@gmail.com>
+" FILE: matcher_ignore_pattern.vim
+" AUTHOR:  Shougo Matsushita <Shougo.Matsu@gmail.com>
 " License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -26,46 +26,22 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! vimfiler#custom#get() abort "{{{
-  if !exists('s:custom')
-    let s:custom = {}
-    let s:custom.profiles = {}
-  endif
-
-  return s:custom
+function! vimfiler#filters#matcher_ignore_pattern#define() abort
+  return s:filter
 endfunction"}}}
 
-function! vimfiler#custom#profile(profile_name, option_name, value) abort "{{{
-  let custom = vimfiler#custom#get()
-  let profile_name =
-        \ has_key(custom.profiles, a:profile_name) ?
-        \ a:profile_name : 'default'
+let s:filter = {
+      \ 'name' : 'matcher_ignore_pattern',
+      \ 'description' : 'ignore g:vimfiler_ignore_pattern matched files',
+      \ }
 
-  for key in split(profile_name, '\s*,\s*')
-    if !has_key(custom.profiles, key)
-      let custom.profiles[key] = s:init_profile()
-    endif
-
-    let custom.profiles[key][a:option_name] = a:value
+function! s:filter.filter(files, context) abort "{{{
+  for pattern in filter(vimfiler#util#convert2list(
+        \ g:vimfiler_ignore_pattern), "v:val != ''")
+    call filter(a:files,
+          \  "v:val.vimfiler__filename !~? pattern")
   endfor
-endfunction"}}}
-function! vimfiler#custom#get_profile(profile_name, option_name) abort "{{{
-  let custom = vimfiler#custom#get()
-  let profile_name =
-        \ has_key(custom.profiles, a:profile_name) ?
-        \ a:profile_name : 'default'
-
-  if !has_key(custom.profiles, profile_name)
-    let custom.profiles[profile_name] = s:init_profile()
-  endif
-
-  return custom.profiles[profile_name][a:option_name]
-endfunction"}}}
-
-function! s:init_profile() abort "{{{
-  return {
-        \ 'context' : {},
-        \ }
+  return a:files
 endfunction"}}}
 
 let &cpo = s:save_cpo
