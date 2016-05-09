@@ -25,7 +25,7 @@
 
 scriptencoding utf-8
 
-let s:Cache = vimfiler#util#get_vital().import('System.Cache.Deprecated')
+let s:Cache = vimfiler#util#get_vital_cache()
 
 function! s:SID_PREFIX() abort
   return matchstr(expand('<sfile>'), '<SNR>\d\+_\zeSID_PREFIX$')
@@ -271,6 +271,8 @@ function! vimfiler#mappings#define_default_mappings(context) abort "{{{
 
   execute s:nowait_nmap() 'x'
         \ '<Plug>(vimfiler_execute_system_associated)'
+  execute s:nowait_nmap() 'X'
+        \ '<Plug>(vimfiler_execute_vimfiler_associated)'
 
   " Move to directory.
   execute s:nowait_nmap() 'h'
