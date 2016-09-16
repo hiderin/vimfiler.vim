@@ -403,22 +403,35 @@ function! vimfiler#init#_start(path, ...) abort "{{{
   endif
 
   if !context.create
-    " Search vimfiler buffer.
-    for bufnr in filter(insert(range(1, bufnr('$')), bufnr('%')),
-          \ "bufloaded(v:val) &&
-          \ getbufvar(v:val, '&filetype') =~# 'vimfiler'")
-      let vimfiler = getbufvar(bufnr, 'vimfiler')
-      if type(vimfiler) == type({})
-            \ && vimfiler.context.buffer_name ==# context.buffer_name
-            \ && (!exists('t:tabpagebuffer')
-            \      || has_key(t:tabpagebuffer, bufnr))
-            \ && (!context.invisible || bufwinnr(bufnr) < 0)
-        call vimfiler#init#_switch_vimfiler(bufnr, context, path)
-        return
-      endif
+    if filereadable(path)
+      let source_name = 'file'
+      let source_args = [path]
+    else
+      let ret = vimfiler#parse_path(path)
+      let source_name = ret[0]
+      let source_args = ret[1:]
+    endif
+    let ret = unite#vimfiler_check_filetype(
+          \ [insert(source_args, source_name)])
 
-      unlet vimfiler
-    endfor
+    if empty(ret) || ret[0] ==# 'directory' || context.find
+      " Search vimfiler buffer.
+      for bufnr in filter(insert(range(1, bufnr('$')), bufnr('%')),
+            \ "bufloaded(v:val) &&
+            \ getbufvar(v:val, '&filetype') =~# 'vimfiler'")
+        let vimfiler = getbufvar(bufnr, 'vimfiler')
+        if type(vimfiler) == type({})
+              \ && vimfiler.context.buffer_name ==# context.buffer_name
+              \ && (!exists('t:tabpagebuffer')
+              \      || has_key(t:tabpagebuffer, bufnr))
+              \ && (!context.invisible || bufwinnr(bufnr) < 0)
+          call vimfiler#init#_switch_vimfiler(bufnr, context, path)
+          return
+        endif
+
+        unlet vimfiler
+      endfor
+    endif
   endif
 
   call s:create_vimfiler_buffer(path, context)
@@ -523,6 +536,9 @@ function! s:create_vimfiler_buffer(path, context) abort "{{{
   " Create new buffer name.
   let prefix = 'vimfiler:'
   let prefix .= context.buffer_name
+  if a:path =~ ':' && a:path !~ '/$'
+    let prefix .= '@' . a:path
+  endif
 
   let postfix = vimfiler#init#_get_postfix(prefix, 1)
 
@@ -613,7 +629,9 @@ function! s:buffer_default_settings() abort "{{{
   endif
 
   if has('conceal')
-    setlocal conceallevel=3
+    if &l:conceallevel < 2
+      setlocal conceallevel=2
+    endif
     setlocal concealcursor=nvc
   endif
 
@@ -623,6 +641,7 @@ function! s:buffer_default_settings() abort "{{{
 
   if g:vimfiler_force_overwrite_statusline
         \ && &l:statusline !=# b:vimfiler.statusline
+    let &l:statusline = b:vimfiler.statusline
   endif
 endfunction"}}}
 
